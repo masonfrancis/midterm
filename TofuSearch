@@ -1,0 +1,146 @@
+
+
+import java.util.*;
+import java.lang.Math;
+
+class TofuSearch extends Quagent {
+
+    public static void main(String[] args) throws Exception {
+		new TofuSearch();
+    }
+
+    TofuSearch() throws Exception {
+		
+		super();
+		
+		//walk(25);
+		
+		//float radius = 707.0F;
+		
+		try {
+		
+		//this.walk(100);
+			boolean tofu;
+		
+			while (true) {
+				tofu = false;
+		
+				while (!tofu) { // search block
+				
+					this.radius(100);
+				
+					tofu = handleSearchEvents(this.events());
+					
+					Thread.currentThread().sleep(1000);
+				}
+			
+				this.pickup("tofu");
+				
+			}
+		}	 
+		catch (QDiedException e) { // the quagent died -- catch that exception
+			System.out.println("bot died!");
+			this.close();
+		}
+		catch (Exception e) { // something else went wrong???
+			System.out.println("system failure: "+e);
+			System.exit(0);
+		}
+    }
+
+    public boolean handleSearchEvents(Events events) throws Exception {
+		
+		for (int ix = 0; ix < events.size(); ix++) {
+			
+			String e = events.eventAt(ix);
+			System.out.println(e);
+			String[] tokens = e.split("\\s+");
+			
+			if (e.indexOf("radius") >= 0) { // get our radius event
+				
+				System.out.println(tokens[4]);
+				System.out.println(Integer.parseInt(tokens[4]) == 0);
+				
+				if (Integer.parseInt(tokens[4]) > 0) { // if the quagent sees tofu nearby
+				
+					System.out.println("We got one!");
+					
+					double current_yaw = 0.1;	//find out which direction the Quagent is facing
+					while(current_yaw == 0.1){  // because the coordinates returned by "radius"
+						this.where();			// do not take yaw into account when using local postitioning
+						current_yaw = get_yaw(this.events()); // so we need to compensate
+					}
+					
+					double x = Double.parseDouble(tokens[6]); //find out where the tofu is
+					double y = Double.parseDouble(tokens[7]); // in relation to the quagent
+					
+					int walk = (int) Math.sqrt(x*x + y*y); //find out how far we have to walk to the tofu
+					int turn = 0;							// create a variable for our turn
+					
+							//while looking over the necessary requirements to determine how to compute our angle
+							// I realized that, as long as the signs were correct, that arctan would return the correct
+							// turning angle. all I need is whether or not it's y/x or x/y
+							
+							// it turns out that if |x| > |y|, then arctan takes y/x as it's input
+							// the opposite is true for |x| < |y|
+							// therefore, it only takes one if statement to determine how the Quagent needs to turn
+					
+					if (Math.abs(x) >= Math.abs(y)) {  
+						turn = (int) ((((Math.atan2(y,x)) * 180 ) / Math.PI) - current_yaw);
+					} else {
+						turn = (int) ((((Math.atan2(x,y)) * 180 ) / Math.PI) - current_yaw);
+					}				
+					
+					this.turn(turn);
+					this.walk(walk);
+					
+					return true;
+					
+
+				} else if (Integer.parseInt(tokens[4]) == 0) {
+					int dist = (int)(Math.random()*100.0);
+					int turn = (int)(Math.random()*180.0 - 90.0);
+				
+					this.turn(turn);
+					this.walk(dist);
+				
+					Thread.currentThread().sleep(1000);
+				
+					return false;
+				}
+			}
+		} return false;
+	}
+	
+	public double get_yaw(Events events) {
+		for(int i = 0; i < events.size(); i++) {
+			String e = events.eventAt(i);
+			if(e.indexOf("getwhere") >= 0) {
+				String[] tokens = e.split("[()\\s]+");
+				return Double.parseDouble(tokens[7]);
+			}
+		}
+		return 0.1;
+	}
+	
+	public boolean handlePickupEvents(Events events) throws Exception{
+	
+		for (int ix = 0; ix < events.size(); ix++) {
+		
+			String e = events.eventAt(ix);
+			String[] tokens = e.split("\\s+");
+			
+			if (e.indexOf("pickup") >= 0) {
+				System.out.println(e);
+				if ( tokens[0] == "OK") {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
+}
+
+
