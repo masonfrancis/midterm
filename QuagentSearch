@@ -1,1 +1,149 @@
+import java.util.*;
+/*
+Info about tournament room1:
+	- dimensions x (-481, 481), y(-488,488)
+
+
+
+
+
+*/
+class Midterm extends Quagent {
+
+	public static int DISTANCE = 100; 
+									  
+    public static void main(String[] args) throws Exception {
+		new Midterm();
+    }
+
+    Midterm() throws Exception { 
+		super(); 
+		
+		try {
+			boolean startLap, getWhere; // create the booleans for the first two while loops
+			startLap = false; // initialize them both as false
+			getWhere = false;
+			
+			double x = 0; //these doubles will store the Quagent's
+			double y = 0; // location when it hits the wall
+		
+			double[] location = new double[2];  //this array will be used
+				location[0] = 0;				// when carrying the two doubles through
+				location[1] = 0;				// the "get location" method.
+			
+			/*
+			while(!startLap){ // the first while loop
+				this.walk(1000); // walk forward ALOT
+				startLap = firstSteps(this.events()); // check to see if we hit a wall
+				Thread.currentThread().sleep(1000); // wait patiently for the threads to connect
+			}
+			
+			System.out.println("Beginning the lap."); // just to let everyone know whats going on
+			
+			this.turn(90); // face the right direction
+		*/
+			while(true) { // our last while{} loop
+				
+				this.rays(8); //our crucial rays command
+				this.where();// the also kind-of crucial where command
+	
+				handleMainEvents(this.events(), x, y); // our handleEvents method, which also takes the
+													//    coordinates of the Quagent's collision as input
+				Thread.currentThread().sleep(650); // give the Quagent time to think it over
+				
+			}
+		}	 
+		catch (QDiedException e) { // the quagent died -- catch that exception
+			System.out.println("bot died!");
+			this.close();
+		}
+		catch (Exception e) { // just incase something else went wrong
+			System.out.println("system failure: "+e);
+			System.exit(0);
+		}
+    }
+
+	public boolean firstSteps(Events events) throws Exception{ // the method for our first while loop
+	
+		for (int ix = 0; ix < events.size(); ix++){
+			String e = events.eventAt(ix);
+			
+			if (e.indexOf("STOPPED") >= 0){ // if the quagent stopped
+				return true; // let the loop know
+			} else {
+				return false; // if not, keep looping
+			}
+		}
+		return false;
+	}
+	
+	public double[] getLocation(Events events) throws Exception{ // the method for the second loop
+		
+		double[] location = new double[2]; // the double array to store the location of the Quagent
+		
+		for (int ix = 0; ix < events.size(); ix++){
+			String e = events.eventAt(ix);
+			if (e.indexOf("getwhere") >= 0) { // if the method recieves the "where" event
+				
+				String[] tokens = e.split("[()\\s]+");
+				
+				double x = Double.parseDouble(tokens[3]);
+				double y = Double.parseDouble(tokens[4]);
+				
+				location[0] = x;
+				location[1] = y;
+				
+				return location; // stored and return the location of the Quagent
+			} else {
+				location[0] = 0;
+				location[1] = 0;
+				return location; // if not return a blank location array
+			}
+		}
+		return location; //this is required for the method to work
+	}
+	
+	public void handleMainEvents(Events events, double xx, double yy) throws Exception{
+		for (int ix = 0; ix < events.size(); ix++){  // this method handles the main while loop,
+			String e = events.eventAt(ix);			//  and all of the turning the quagent does
+			
+			String[] tokens = e.split("[()\\s]+"); 
+												
+			if (e.indexOf("rays") >= 0) {		
+		
+				double px1 = Double.parseDouble(tokens[6]);  
+				double py1 = Double.parseDouble(tokens[7]);  
+				double frontDist = Math.sqrt(px1*px1 + py1*py1); 
+				
+				double px2 = Double.parseDouble(tokens[11]);   
+				double py2 = Double.parseDouble(tokens[12]);  
+				double leftDist = Math.sqrt(px2*px2 + py2*py2);
+				
+				double nx1 = Double.parseDouble(tokens[16]); 
+				double ny1 = Double.parseDouble(tokens[17]);
+				double backDist = Math.sqrt(nx1*nx1 + ny1*ny1);
+				
+				double nx2 = Double.parseDouble(tokens[21]); 
+				double ny2 = Double.parseDouble(tokens[22]);
+				double rightDist = Math.sqrt(nx2*nx2 + ny2*ny2);
+				
+				boolean turnRight = ((frontDist > 100) && (leftDist > 100) && (backDist > 100) && (rightDist > 100));
+													
+				if (frontDist < DISTANCE) {		
+					this.turn(30);      
+				} else if (turnRight) { /
+					this.turn(-90);
+					this.walk (50);
+					Thread.currentThread().sleep(1250);
+				} else { this.walk(50); } 
+	
+			} else if(e.indexOf("rays") >= 0 && e.indexOf("TOFU") >= 0) {
+			
+			
+			} else if (e.indexOf("STOPPED") >= 0) {
+				this.turn(30);
+			}
+		}
+	}     // and thats's the end of that!
+}
 
